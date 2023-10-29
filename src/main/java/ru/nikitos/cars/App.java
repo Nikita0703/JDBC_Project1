@@ -1,12 +1,9 @@
 package ru.nikitos.cars;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.stereotype.Component;
 import ru.nikitos.cars.configuration.AppConfig;
-import ru.nikitos.cars.dao.EmployeeDAO;
 import ru.nikitos.cars.entity.*;
-import ru.nikitos.cars.service.CarService;
 import ru.nikitos.cars.service.EmployeeService;
 
 import java.sql.*;

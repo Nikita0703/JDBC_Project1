@@ -33,6 +33,7 @@ public class EmployeeDAO {
         statement.executeUpdate();
     }
 
+
     public void updateEmployee(Employee employee, int id) throws SQLException {
         String sql = "UPDATE employee_full SET name = ?, surname = ?, salary = ?, department = ?, car_id = ? WHERE id = ?";
         PreparedStatement statement = connection.prepareStatement(sql);

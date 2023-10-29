@@ -157,7 +157,6 @@ public class EmployeeService {
             }
         }
 
-
         employeeDAO.deleteEmployee(id);
         carDAO.deleteCar(carId);
         houseDAO.deleteHouse(houseId);

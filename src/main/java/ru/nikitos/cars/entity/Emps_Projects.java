@@ -1,6 +1,7 @@
 package ru.nikitos.cars.entity;
 
 public class Emps_Projects {
+
     int id;
 
     int employee_id;

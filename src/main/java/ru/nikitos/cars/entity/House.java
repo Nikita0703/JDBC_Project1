@@ -12,7 +12,6 @@ public class House {
         this.flour = flour;
         this.flat = flat;
     }
-
     public House(){};
 
     public int getId() {

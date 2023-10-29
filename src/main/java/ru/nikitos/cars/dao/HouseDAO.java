@@ -60,6 +60,7 @@ public class HouseDAO {
             house.setFlat(resultSet.getInt("flat"));
             houses.add(house);
         }
+
         return houses;
     }
 

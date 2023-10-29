@@ -18,6 +18,7 @@ public class Employee {
         return id;
     }
 
+
     public Employee(String name, String surname, int salary, String department) {
         this.name = name;
         this.surname = surname;

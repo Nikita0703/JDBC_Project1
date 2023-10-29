@@ -4,8 +4,7 @@ package ru.nikitos.cars.entity;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-//@Component
-//@Scope("singleton")
+
 public class Car {
     private int id;
 

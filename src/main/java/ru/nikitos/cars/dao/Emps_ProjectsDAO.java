@@ -55,6 +55,7 @@ public class Emps_ProjectsDAO {
     }
 
 
+
     public void updateCar(Car car) throws SQLException {
         String sql = "UPDATE car_for_empl SET model = ?, made = ? WHERE id = ?";
         PreparedStatement statement = connection.prepareStatement(sql);
