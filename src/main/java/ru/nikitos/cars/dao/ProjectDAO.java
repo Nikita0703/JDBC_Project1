@@ -5,22 +5,30 @@ import org.springframework.stereotype.Component;
 import ru.nikitos.cars.entity.Car;
 import ru.nikitos.cars.entity.Project;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 @Component
 public class ProjectDAO {
     @Autowired
     private Connection connection;
-    public void addProject(Project project) throws SQLException {
+    public int addProject(Project project) throws SQLException {
+        int id = 0;
         String sql = "INSERT INTO projects_for_empl (title, year) VALUES (?, ?)";
-        PreparedStatement statement = connection.prepareStatement(sql);
+        PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
         statement.setString(1, project.getTitle());
         statement.setInt(2, project.getYear());
         statement.executeUpdate();
+        try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+            if (generatedKeys.next()) {
+                id = generatedKeys.getInt(1);
+                System.out.println("Inserted object with id: " + id);
+            } else {
+                throw new SQLException("Creating user failed, no ID obtained.");
+            }
+        }
+        statement.close();
+        return id;
     }
 
 
@@ -36,6 +44,8 @@ public class ProjectDAO {
             project.setTitle(resultSet.getString("title"));
             project.setYear(resultSet.getInt("year"));
         }
+        resultSet.close();
+        statement.close();
         return project;
     }
 
@@ -51,6 +61,8 @@ public class ProjectDAO {
             project.setYear(resultSet.getInt("year"));
             projects.add(project);
         }
+        resultSet.close();
+        statement.close();
         return projects;
 
     }
@@ -63,6 +75,7 @@ public class ProjectDAO {
         statement.setInt(2, project.getYear());
         statement.setInt(3, project.getId());
         statement.executeUpdate();
+        statement.close();
     }
 
 
@@ -71,6 +84,7 @@ public class ProjectDAO {
         PreparedStatement statement = connection.prepareStatement(sql);
         statement.setInt(1, id);
         statement.executeUpdate();
+        statement.close();
     }
 }
 

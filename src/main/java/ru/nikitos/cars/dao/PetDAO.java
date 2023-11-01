@@ -5,10 +5,7 @@ import org.springframework.stereotype.Component;
 import ru.nikitos.cars.entity.Car;
 import ru.nikitos.cars.entity.Pet;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 @Component
@@ -19,13 +16,24 @@ public class PetDAO {
     //public PetDAO(Connection connection) {
        // this.connection = connection;
    // }
-    public void addPet(Pet pet) throws SQLException {
+    public int addPet(Pet pet) throws SQLException {
+        int id;
         String sql = "INSERT INTO pets_for_empl (vid, petname, employee_id) VALUES (?, ?, ?)";
-        PreparedStatement statement = connection.prepareStatement(sql);
+        PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
         statement.setString(1, pet.getVid() );
         statement.setString(2, pet.getName());
         statement.setInt(3,pet.getEmployee_id());
         statement.executeUpdate();
+        try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+            if (generatedKeys.next()) {
+                id = generatedKeys.getInt(1);
+                System.out.println("Inserted object with id: " + id);
+            } else {
+                throw new SQLException("Creating user failed, no ID obtained.");
+            }
+        }
+        statement.close();
+        return id;
     }
 
 
@@ -42,6 +50,8 @@ public class PetDAO {
             pet.setName(resultSet.getString("petname"));
             pet.setEmployee_id(resultSet.getInt("employee_id"));
         }
+        resultSet.close();
+        statement.close();
         return pet;
     }
 
@@ -58,6 +68,8 @@ public class PetDAO {
             pet.setEmployee_id(resultSet.getInt("employee_id"));
             pets.add(pet);
         }
+        resultSet.close();
+        statement.close();
         return pets;
 
     }
@@ -70,6 +82,7 @@ public class PetDAO {
         statement.setString(2, pet.getName());
         statement.setInt(3, pet.getId());
         statement.executeUpdate();
+        statement.close();
     }
 
 
@@ -78,6 +91,7 @@ public class PetDAO {
         PreparedStatement statement = connection.prepareStatement(sql);
         statement.setInt(1, id);
         statement.executeUpdate();
+        statement.close();
     }
 }
 

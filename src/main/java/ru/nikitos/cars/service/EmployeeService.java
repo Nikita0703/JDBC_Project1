@@ -32,43 +32,13 @@ public class EmployeeService {
 
     public void addEmployee(Employee employee, Car car, House house, List<Pet> pets, List<Project> projects) throws SQLException {
 
-        carDAO.addCar(car);
-        List<Car> cars = carDAO.getAllCars();
-        int idCar = 0;
-        for (Car caro : cars) {
-            if (car.getModel().equals(caro.getModel()) && car.getYear() == caro.getYear()) {
-                idCar = caro.getId();
-            }
-        }
-        houseDAO.addHouse(house);
-        List<House> houses = houseDAO.getAllHousess();
-        int idHouse = 0;
-        for (House h : houses) {
-            if (house.getAdress().equals(h.getAdress()) &&
-                    house.getFlour()== h.getFlour() &&
-                      house.getFlat()==h.getFlat()
-            ) {
-                idHouse = h.getId();
-            }
-        }
+        int idCar = carDAO.addCar(car);
+        int idHouse = houseDAO.addHouse(house);
+
         employee.setCarId(idCar);
         employee.setHouse_id(idHouse);
-        employeeDAO.addEmployee(employee);
 
-        List<Employee> employees = employeeDAO.getAllEmployees();
-        int idEmpl = 0;
-
-        for(Employee emp :employees){
-            if(emp.getName().equals(employee.getName())&&
-                    emp.getSurname().equals(employee.getSurname())&&
-                       emp.getDepartment().equals(employee.getDepartment())&&
-                          emp.getSalary()==employee.getSalary()&&
-                             emp.getCar_id()==employee.getCar_id()&&
-                                emp.getHouse_id()==employee.getHouse_id()
-            ){
-               idEmpl = emp.getId();
-            }
-        }
+        int idEmpl = employeeDAO.addEmployee(employee);
 
         for (Pet pet :pets){
             pet.setEmployee_id(idEmpl);

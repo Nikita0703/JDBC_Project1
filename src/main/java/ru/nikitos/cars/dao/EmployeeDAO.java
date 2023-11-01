@@ -5,10 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import ru.nikitos.cars.entity.Employee;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 @Component
@@ -20,10 +17,11 @@ public class EmployeeDAO {
       //  this.connection = connection;
   //  }
 
-    public void addEmployee(Employee employee) throws SQLException {
+    public int addEmployee(Employee employee) throws SQLException {
        // String sql = "INSERT INTO employee (name, surname, salary, department) VALUES (?, ?, ?, ?)";
+        int id = 0;
         String sql = "INSERT INTO employee_full (name, surname, salary, department, car_id,house_id) VALUES (?, ?, ?, ?, ?,?)";
-        PreparedStatement statement = connection.prepareStatement(sql);
+        PreparedStatement statement = connection.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS);
         statement.setString(1, employee.getName());
         statement.setString(2, employee.getSurname());
         statement.setInt(3, employee.getSalary());
@@ -31,6 +29,16 @@ public class EmployeeDAO {
         statement.setInt(5, employee.getCarId());
         statement.setInt(6, employee.getHouse_id());
         statement.executeUpdate();
+        try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+            if (generatedKeys.next()) {
+                id = generatedKeys.getInt(1);
+                System.out.println("Inserted object with id: " + id);
+            } else {
+                throw new SQLException("Creating user failed, no ID obtained.");
+            }
+        }
+        statement.close();
+        return id;
     }
 
 
@@ -44,6 +52,7 @@ public class EmployeeDAO {
         statement.setInt(5, employee.getCarId());
         statement.setInt(6, id);
         statement.executeUpdate();
+        statement.close();
     }
 
     public void deleteEmployee(int id) throws SQLException {
@@ -51,6 +60,7 @@ public class EmployeeDAO {
         PreparedStatement statement = connection.prepareStatement(sql);
         statement.setInt(1, id);
         statement.executeUpdate();
+        statement.close();
     }
 
     public Employee getEmployee(int id) throws SQLException {
@@ -67,8 +77,12 @@ public class EmployeeDAO {
             employee.setDepartment(resultSet.getString("department"));
             employee.setCarId(resultSet.getInt("car_id"));
             employee.setHouse_id(resultSet.getInt("house_id"));
+            resultSet.close();
+            statement.close();
             return employee;
         }
+        resultSet.close();
+        statement.close();
         return null;
     }
     public List<Employee> getAllEmployees() throws SQLException {
@@ -87,6 +101,9 @@ public class EmployeeDAO {
             employee.setHouse_id(resultSet.getInt("house_id"));
             employees.add(employee);
         }
+
+        resultSet.close();
+        statement.close();
         return employees;
     }
 

@@ -5,10 +5,7 @@ import org.springframework.stereotype.Component;
 import ru.nikitos.cars.entity.Car;
 import ru.nikitos.cars.entity.House;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,13 +18,24 @@ public class HouseDAO {
     //public HouseDAO(Connection connection) {
         //this.connection = connection;
    // }
-    public void addHouse(House house) throws SQLException {
+    public int addHouse(House house) throws SQLException {
+        int id = 0;
         String sql = "INSERT INTO house_for_empl (adress, flour,flat) VALUES (?, ?,?)";
-        PreparedStatement statement = connection.prepareStatement(sql);
+        PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
         statement.setString(1, house.getAdress());
         statement.setInt(2, house.getFlour());
         statement.setInt(3, house.getFlat());
         statement.executeUpdate();
+        try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+            if (generatedKeys.next()) {
+                id = generatedKeys.getInt(1);
+                System.out.println("Inserted object with id: " + id);
+            } else {
+                throw new SQLException("Creating user failed, no ID obtained.");
+            }
+        }
+        statement.close();
+        return id;
     }
 
 
@@ -44,6 +52,8 @@ public class HouseDAO {
             house.setFlour(resultSet.getInt("flour"));
             house.setFlat(resultSet.getInt("flat"));
         }
+        resultSet.close();
+        statement.close();
         return house;
     }
 
@@ -60,7 +70,8 @@ public class HouseDAO {
             house.setFlat(resultSet.getInt("flat"));
             houses.add(house);
         }
-
+        resultSet.close();
+        statement.close();
         return houses;
     }
 
@@ -73,6 +84,7 @@ public class HouseDAO {
         statement.setInt(3, house.getFlour());
         statement.setInt(4, house.getId());
         statement.executeUpdate();
+        statement.close();
     }
 
 
@@ -81,6 +93,7 @@ public class HouseDAO {
         PreparedStatement statement = connection.prepareStatement(sql);
         statement.setInt(1, id);
         statement.executeUpdate();
+        statement.close();
     }
 }
 
