@@ -1,13 +1,17 @@
 package ru.nikitos.cars.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.stereotype.Service;
+import ru.nikitos.cars.configuration.AppConfig;
 import ru.nikitos.cars.dao.*;
 import ru.nikitos.cars.entity.*;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 @Service
 public class EmployeeService {
@@ -27,38 +31,36 @@ public class EmployeeService {
     private ProjectDAO projectDAO;
 
     @Autowired
-    private Emps_ProjectsDAO empsProjectsDAO;
-
+    private Connection connection;
 
     public void addEmployee(Employee employee, Car car, House house, List<Pet> pets, List<Project> projects) throws SQLException {
 
-        int idCar = carDAO.addCar(car);
-        int idHouse = houseDAO.addHouse(house);
+        try  {
 
-        employee.setCarId(idCar);
-        employee.setHouse_id(idHouse);
+            connection.setAutoCommit(false);
 
-        int idEmpl = employeeDAO.addEmployee(employee);
+            int idCar = carDAO.addCar(car);
+            int idHouse = houseDAO.addHouse(house);
 
-        for (Pet pet :pets){
-            pet.setEmployee_id(idEmpl);
-            petDAO.addPet(pet);
-        }
+            employee.setCarId(idCar);
+            employee.setHouse_id(idHouse);
 
-        for (Project project:projects){
-            projectDAO.addProject(project);
-        }
+            employee.setProjects(projects);
+            int idEmpl = employeeDAO.addEmployee(employee);
 
-        List<Project> projectList = projectDAO.getAllProjects();
-        for (Project project:projectList){
-            for (Project pr :projects){
-                if (pr.getTitle().equals(project.getTitle())
-                     && pr.getYear()==project.getYear()){
-                    Emps_Projects empsProjects = new Emps_Projects();
-                    empsProjects.setEmployee_id(idEmpl);
-                    empsProjects.setProjects_id(project.getId());
-                    empsProjectsDAO.addEmpProjectIds(empsProjects);
-                }
+            for (Pet pet : pets) {
+                pet.setEmployee_id(idEmpl);
+                petDAO.addPet(pet);
+            }
+
+            connection.commit();
+
+        }catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
             }
         }
     }
@@ -88,18 +90,9 @@ public class EmployeeService {
             }
             System.out.print(" ]");
 
-            List<Project> Projects = new ArrayList<>();
-            List<Emps_Projects> empsProjects = empsProjectsDAO.getAllEmpProjectIds();
-            for (Emps_Projects emp_project :empsProjects){
-                if(emp_project.getEmployee_id()==e.getId()){
-                    int idProject = emp_project.getProjects_id();
-                    Project project = projectDAO.getProjectById(idProject);
-                    Projects.add(project);
-                }
-            }
 
             System.out.print("Projects [");
-            for (Project project:Projects){
+            for (Project project: e.getProjects()){
                 System.out.print(" {title - "+ project.getTitle()+ " year - "+project.getYear() + " }");
             }
             System.out.println(" ]");
@@ -111,15 +104,11 @@ public class EmployeeService {
         int carId = employee.getCarId();
         int houseId = employee.getHouse_id();
 
-        List<Emps_Projects> empsProjects = empsProjectsDAO.getAllEmpProjectIds();
-        for (Emps_Projects empPr :empsProjects){
-            if (empPr.getEmployee_id() == id ){
-                int idProject = empPr.getProjects_id();
-                empsProjectsDAO.deleteEmpProjectIds(empPr.getId());
-                projectDAO.deleteProject(idProject);
-            }
-        }
+       List<Project> projects = projectDAO.getAllProjects();
 
+       for(Project project: projects){
+           projectDAO.deleteProject(project.getId());
+       }
         List<Pet> pets = petDAO.getAllPets();
         for (Pet pet :pets){
             if (pet.getEmployee_id()==id){
@@ -134,182 +123,119 @@ public class EmployeeService {
     };
 
     public void updateEmployee(Employee employee, Car car, House house, List<Pet> pets, List<Project> projects,int id) throws SQLException {
-        employee.setId(id);
-        int carId = employee.getCarId();
-        int houseId = employee.getHouse_id();
-        employeeDAO.updateEmployee(employee,id);
-        carDAO.updateCar(car);
-        houseDAO.updateHouse(house);
+       try {
 
-        int newLength = pets.size();
-        int priviousLength = 0;
+           connection.setAutoCommit(false);
 
-        List<Pet> petslist = petDAO.getAllPets();
-        for (Pet pt:petslist){
-            if (pt.getEmployee_id()==employee.getId()){
-                priviousLength+=1;
+           employee.setId(id);
+           int carId = employee.getCarId();
+           int houseId = employee.getHouse_id();
+           employeeDAO.updateEmployee(employee, id, projects);
+           carDAO.updateCar(car);
+           houseDAO.updateHouse(house);
+
+           int newLength = pets.size();
+           int priviousLength = 0;
+
+           List<Pet> petslist = petDAO.getAllPets();
+           for (Pet pt : petslist) {
+               if (pt.getEmployee_id() == employee.getId()) {
+                   priviousLength += 1;
+               }
+           }
+
+           if (priviousLength > newLength) {
+               int difference = priviousLength - newLength;
+               for (int i = 0; i < difference; i++) {
+                   for (Pet pt : petslist) {
+                       if (pt.getEmployee_id() == employee.getId()) {
+                           petDAO.deletePet(pt.getId());
+                           break;
+                       }
+                   }
+               }
+               for (Pet pet : pets) {
+                   for (Pet pt : petslist) {
+                       boolean Flag = false;
+                       if (pt.getEmployee_id() == employee.getId()) {
+                           for (Pet pet1 : pets) {
+                               if (pt.getName().equals(pet1.getName())
+                                       && pt.getVid().equals(pet1.getVid())) {
+                                   Flag = true;
+                               }
+                           }
+                           if (Flag == false) {
+                               pet.setId(pt.getId());
+                               petDAO.updatePet(pet);
+                           }
+                       }
+                       if (Flag == false) {
+                           break;
+                       }
+                   }
+               }
+
+           }
+
+
+           if (priviousLength == newLength) {
+               for (Pet pet : pets) {
+                   for (Pet pt : petslist) {
+                       boolean Flag = false;
+                       if (pt.getEmployee_id() == employee.getId()) {
+                           for (Pet pet1 : pets) {
+                               if (pt.getName().equals(pet1.getName())
+                                       && pt.getVid().equals(pet1.getVid())) {
+                                   Flag = true;
+                               }
+                           }
+                           if (Flag == false) {
+                               pet.setId(pt.getId());
+                               petDAO.updatePet(pet);
+                           }
+                       }
+                       if (Flag == false) {
+                           break;
+                       }
+                   }
+               }
+           }
+
+           if (priviousLength < newLength) {
+               int diference = newLength - priviousLength;
+               for (int i = 0; i < diference; i++) {
+                   Pet pet = new Pet("", "");
+                   pet.setEmployee_id(employee.getId());
+                   petDAO.addPet(pet);
+               }
+               for (Pet pet : pets) {
+                   for (Pet pt : petslist) {
+                       boolean Flag = false;
+                       if (pt.getEmployee_id() == employee.getId()) {
+                           for (Pet pet1 : pets) {
+                               if (pt.getName().equals(pet1.getName())
+                                       && pt.getVid().equals(pet1.getVid())) {
+                                   Flag = true;
+                               }
+                           }
+                           if (Flag == false) {
+                               pet.setId(pt.getId());
+                               petDAO.updatePet(pet);
+                           }
+                       }
+                       if (Flag == false) {
+                           break;
+                       }
+                   }
+               }
+           }
+       }catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
             }
         }
-
-       if (priviousLength>newLength){
-           int difference = priviousLength - newLength;
-           for (int i = 0;i<difference;i++){
-               for (Pet pt:petslist){
-                   if (pt.getEmployee_id()==employee.getId()){
-                       petDAO.deletePet(pt.getId());
-                       break;
-                   }
-               }
-           }
-           for (Pet pet : pets) {
-               for (Pet pt : petslist) {
-                   boolean Flag = false;
-                   if (pt.getEmployee_id() == employee.getId()) {
-                       for (Pet pet1 : pets) {
-                           if (pt.getName().equals(pet1.getName())
-                                   && pt.getVid().equals(pet1.getVid())) {
-                               Flag = true;
-                           }
-                       }
-                       if (Flag == false) {
-                           pet.setId(pt.getId());
-                           petDAO.updatePet(pet);
-                       }
-                   }
-                   if (Flag == false) {
-                       break;
-                   }
-               }
-           }
-
-       }
-
-
-
-       if (priviousLength == newLength) {
-           for (Pet pet : pets) {
-               for (Pet pt : petslist) {
-                   boolean Flag = false;
-                   if (pt.getEmployee_id() == employee.getId()) {
-                       for (Pet pet1 : pets) {
-                           if (pt.getName().equals(pet1.getName())
-                                   && pt.getVid().equals(pet1.getVid())) {
-                               Flag = true;
-                           }
-                       }
-                       if (Flag == false) {
-                           pet.setId(pt.getId());
-                           petDAO.updatePet(pet);
-                       }
-                   }
-                   if (Flag == false) {
-                       break;
-                   }
-               }
-           }
-       }
-
-       if(priviousLength<newLength){
-           int diference = newLength-priviousLength;
-           for(int i = 0;i<diference;i++){
-               Pet pet = new Pet("","");
-               pet.setEmployee_id(employee.getId());
-               petDAO.addPet(pet);
-           }
-           for (Pet pet : pets) {
-               for (Pet pt : petslist) {
-                   boolean Flag = false;
-                   if (pt.getEmployee_id() == employee.getId()) {
-                       for (Pet pet1 : pets) {
-                           if (pt.getName().equals(pet1.getName())
-                                   && pt.getVid().equals(pet1.getVid())) {
-                               Flag = true;
-                           }
-                       }
-                       if (Flag == false) {
-                           pet.setId(pt.getId());
-                           petDAO.updatePet(pet);
-                       }
-                   }
-                   if (Flag == false) {
-                       break;
-                   }
-               }
-           }
-       }
-
-       List<Project> projectslist = projectDAO.getAllProjects();
-       int newLengthProject = projects.size();
-       int priviousLengthProject = 0;
-       List<Emps_Projects> empsProjects = empsProjectsDAO.getAllEmpProjectIds();
-
-       for (Emps_Projects empPr: empsProjects){
-           if (empPr.getEmployee_id()==employee.getId()){
-               priviousLengthProject+=1;
-           }
-       }
-
-       if(priviousLengthProject>newLengthProject){
-           int difference = priviousLength - newLengthProject;
-           for (int i = 0;i<difference;i++){
-               for (Emps_Projects empPr: empsProjects){
-                   if (empPr.getEmployee_id()==employee.getId()){
-                       int projectId = empPr.getProjects_id();
-                       empsProjectsDAO.deleteEmpProjectIds(empPr.getId());
-                       projectDAO.deleteProject(projectId);
-                       break;
-                   }
-               }
-           }
-
-       }
-
-        if(priviousLengthProject<newLengthProject){
-            int projectId = 0;
-            boolean Flag = false;
-            int difference = newLengthProject-priviousLengthProject;
-                for (int i = 0; i < difference; i++) {
-                    Project newProject = new Project("new_project ", 0);
-                    projectDAO.addProject(newProject);
-                    if (Flag == false) {
-                        List<Project> projectslist1 = projectDAO.getAllProjects();
-                       for (Project project : projectslist1) {
-                          if (newProject.getTitle().equals(project.getTitle())
-                                && newProject.getYear() == project.getYear()) {
-                            projectId = project.getId();
-                            Flag = true;
-                          }
-                       }
-                    }
-                   Emps_Projects employeeProjects = new Emps_Projects(employee.getId(),projectId+i);
-                    empsProjectsDAO.addEmpProjectIds(employeeProjects);
-                }
-
-        }
-
-        List<Project> lastprojectlist= projectDAO.getAllProjects();
-        List<Emps_Projects> empsProjects1 = empsProjectsDAO.getAllEmpProjectIds();
-        for (Project project : projects) {
-            for (Emps_Projects pr: empsProjects1) {
-                boolean Flag = false;
-                if (pr.getEmployee_id()== employee.getId()) {
-                    for (Project project1 : projects) {
-                        Project currentProject = projectDAO.getProjectById(pr.getProjects_id());
-                        if (project1.getTitle().equals(currentProject.getTitle())
-                                && project1.getYear()==(currentProject.getYear())) {
-                            Flag = true;
-                        }
-                    }
-                    if (Flag == false) {
-                        project.setId(pr.getProjects_id());
-                        projectDAO.updateProject(project);
-                    }
-                }
-                if (Flag == false) {
-                    break;
-                }
-            }
-        }
-
     }
 }

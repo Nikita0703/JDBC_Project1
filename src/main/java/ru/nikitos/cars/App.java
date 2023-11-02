@@ -68,7 +68,7 @@ public class App
                         employeeName = scanner.nextLine();
                         System.out.print("Введите фамилию: ");
                         employeeSurname = scanner.nextLine();
-                        System.out.print("Введите фамилию: ");
+                        System.out.print("Введите зп: ");
                         employeeSalary = scanner.nextInt();
                         System.out.print("Введите департамент: ");
                         employeeDepartment = scanner.nextLine();

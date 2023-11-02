@@ -1,5 +1,6 @@
 package ru.nikitos.cars.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Employee {
@@ -13,6 +14,8 @@ public class Employee {
     private int car_id;
 
     private int house_id;
+
+    private List<Project> projects = new ArrayList<>();
 
     public int getId() {
         return id;
@@ -86,5 +89,13 @@ public class Employee {
 
     public void setDepartment(String department) {
         this.department = department;
+    }
+
+    public List<Project> getProjects() {
+        return projects;
+    }
+
+    public void setProjects(List<Project> projects) {
+        this.projects = projects;
     }
 }
