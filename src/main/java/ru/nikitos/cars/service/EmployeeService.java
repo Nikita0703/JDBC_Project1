@@ -229,6 +229,9 @@ public class EmployeeService {
                    }
                }
            }
+
+           connection.commit();
+
        }catch (SQLException e) {
             e.printStackTrace();
             try {
