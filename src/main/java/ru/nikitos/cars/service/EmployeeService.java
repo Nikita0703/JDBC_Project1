@@ -7,6 +7,7 @@ import ru.nikitos.cars.configuration.AppConfig;
 import ru.nikitos.cars.dao.*;
 import ru.nikitos.cars.entity.*;
 
+import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -30,12 +31,16 @@ public class EmployeeService {
     @Autowired
     private ProjectDAO projectDAO;
 
-    @Autowired
     private Connection connection;
+
+    @Autowired
+    private DataSource dataSource;
+
 
     public void addEmployee(Employee employee, Car car, House house, List<Pet> pets, List<Project> projects) throws SQLException {
 
         try  {
+            connection = dataSource.getConnection();
 
             connection.setAutoCommit(false);
 
@@ -43,7 +48,7 @@ public class EmployeeService {
             int idHouse = houseDAO.addHouse(house);
 
             employee.setCarId(idCar);
-            employee.setHouse_id(idHouse);
+            employee.setHouseId(idHouse);
 
             employee.setProjects(projects);
             int idEmpl = employeeDAO.addEmployee(employee);
@@ -63,6 +68,9 @@ public class EmployeeService {
                 ex.printStackTrace();
             }
         }
+
+        connection.setAutoCommit(true);
+
     }
 
     public void printAllEmployees() throws SQLException {
@@ -72,7 +80,7 @@ public class EmployeeService {
             int idCar = e.getCarId();
             Car car = carDAO.getCarById(idCar);
             System.out.print("Car{ model -  "+car.getModel()+ " year - "+car.getYear()+ "} ");
-            int idHouse = e.getHouse_id();
+            int idHouse = e.getHouseId();
             House house = houseDAO.getHouseById(idHouse);
 
             System.out.print("House{ adress - "+house.getAdress()+" flour - "+house.getFlour()+" flat - "+house.getFlat()+ "}");
@@ -100,36 +108,52 @@ public class EmployeeService {
     }
 
     public void deleteEmployee(int id) throws SQLException {
-        Employee employee = employeeDAO.getEmployee(id);
-        int carId = employee.getCarId();
-        int houseId = employee.getHouse_id();
+        try {
+            connection = dataSource.getConnection();
 
-       List<Project> projects = projectDAO.getAllProjects();
+            connection.setAutoCommit(false);
+            Employee employee = employeeDAO.getEmployee(id);
+            int carId = employee.getCarId();
+            int houseId = employee.getHouseId();
 
-       for(Project project: projects){
-           projectDAO.deleteProject(project.getId());
-       }
-        List<Pet> pets = petDAO.getAllPets();
-        for (Pet pet :pets){
+            List<Project> projects = projectDAO.getAllProjects();
+
+            for(Project project: projects){
+              projectDAO.deleteProject(project.getId());
+            }
+            List<Pet> pets = petDAO.getAllPets();
+            for (Pet pet :pets){
             if (pet.getEmployee_id()==id){
                 petDAO.deletePet(pet.getId());
             }
+          }
+
+          employeeDAO.deleteEmployee(id);
+          carDAO.deleteCar(carId);
+          houseDAO.deleteHouse(houseId);
+            connection.commit();
+
+        }catch (SQLException e) {
+            e.printStackTrace();
+            try {
+                connection.rollback();
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
         }
 
-        employeeDAO.deleteEmployee(id);
-        carDAO.deleteCar(carId);
-        houseDAO.deleteHouse(houseId);
-
+        connection.setAutoCommit(true);
     };
 
     public void updateEmployee(Employee employee, Car car, House house, List<Pet> pets, List<Project> projects,int id) throws SQLException {
        try {
+           connection = dataSource.getConnection();
 
            connection.setAutoCommit(false);
 
            employee.setId(id);
            int carId = employee.getCarId();
-           int houseId = employee.getHouse_id();
+           int houseId = employee.getHouseId();
            employeeDAO.updateEmployee(employee, id, projects);
            carDAO.updateCar(car);
            houseDAO.updateHouse(house);
@@ -240,5 +264,8 @@ public class EmployeeService {
                 ex.printStackTrace();
             }
         }
+
+        connection.setAutoCommit(true);
+
     }
 }

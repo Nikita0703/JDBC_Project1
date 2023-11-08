@@ -11,9 +11,9 @@ public class Employee {
     private int salary;
     private String department;
 
-    private int car_id;
+    private int carId;
 
-    private int house_id;
+    private int houseId;
 
     private List<Project> projects = new ArrayList<>();
 
@@ -35,28 +35,20 @@ public class Employee {
         this.id = id;
     }
 
-    public int getCar_id() {
-        return car_id;
-    }
-
-    public void setCar_id(int car_id) {
-        this.car_id = car_id;
-    }
-
-    public int getHouse_id() {
-        return house_id;
-    }
-
-    public void setHouse_id(int house_id) {
-        this.house_id = house_id;
-    }
-
     public int getCarId() {
-        return car_id;
+        return carId;
     }
 
     public void setCarId(int carId) {
-        this.car_id = carId;
+        this.carId = carId;
+    }
+
+    public int getHouseId() {
+        return houseId;
+    }
+
+    public void setHouseId(int houseId) {
+        this.houseId = houseId;
     }
 
     public String getName() {

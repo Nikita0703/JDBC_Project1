@@ -22,14 +22,14 @@ public class EmployeeDAO {
        // String sql = "INSERT INTO employee (name, surname, salary, department) VALUES (?, ?, ?, ?)";
         int id = 0;
         String sql = "INSERT INTO employee_full (name, surname, salary, department, car_id,house_id) VALUES (?, ?, ?, ?, ?,?)";
-        PreparedStatement statement = connection.prepareStatement(sql,Statement.RETURN_GENERATED_KEYS);
-        statement.setString(1, employee.getName());
-        statement.setString(2, employee.getSurname());
-        statement.setInt(3, employee.getSalary());
-        statement.setString(4, employee.getDepartment());
-        statement.setInt(5, employee.getCarId());
-        statement.setInt(6, employee.getHouse_id());
-        statement.executeUpdate();
+        try(PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+           statement.setString(1, employee.getName());
+           statement.setString(2, employee.getSurname());
+           statement.setInt(3, employee.getSalary());
+           statement.setString(4, employee.getDepartment());
+           statement.setInt(5, employee.getCarId());
+           statement.setInt(6, employee.getHouseId());
+           statement.executeUpdate();
 
         try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
             if (generatedKeys.next()) {
@@ -49,98 +49,121 @@ public class EmployeeDAO {
             statementManyToMany.close();
         }
         statement.close();
-
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
         return id;
     }
 
 
     public void deleteEmployee(int id) throws SQLException {
         String sql = "DELETE FROM employee_full WHERE id = ?";
-        PreparedStatement statement = connection.prepareStatement(sql);
-        statement.setInt(1, id);
-        statement.executeUpdate();
-        statement.close();
-        String sqlManyToMany = "DELETE FROM emps_projects WHERE employee_id = ?";
-        PreparedStatement statementManyToMany = connection.prepareStatement(sqlManyToMany);
-        statementManyToMany.setInt(1, id);
-        statementManyToMany.executeUpdate();
-        statementManyToMany.close();
+        try(PreparedStatement statement = connection.prepareStatement(sql)) {
+           statement.setInt(1, id);
+           statement.executeUpdate();
+           statement.close();
+           String sqlManyToMany = "DELETE FROM emps_projects WHERE employee_id = ?";
+           PreparedStatement statementManyToMany = connection.prepareStatement(sqlManyToMany);
+           statementManyToMany.setInt(1, id);
+           statementManyToMany.executeUpdate();
+           statementManyToMany.close();
+        }
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public Employee getEmployee(int id) throws SQLException {
         String sql = "SELECT * FROM employee_full WHERE id = ?";
-        PreparedStatement statement = connection.prepareStatement(sql);
-        statement.setInt(1, id);
-        ResultSet resultSet = statement.executeQuery();
-        if (resultSet.next()) {
-            Employee employee = new Employee();
-             employee.setId(resultSet.getInt("id"));
-            employee.setName(resultSet.getString("name"));
-            employee.setSurname(resultSet.getString("surname"));
-            employee.setSalary(resultSet.getInt("salary"));
-            employee.setDepartment(resultSet.getString("department"));
-            employee.setCarId(resultSet.getInt("car_id"));
-            employee.setHouse_id(resultSet.getInt("house_id"));
+        try(PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                Employee employee = new Employee();
+                employee.setId(resultSet.getInt("id"));
+                employee.setName(resultSet.getString("name"));
+                employee.setSurname(resultSet.getString("surname"));
+                employee.setSalary(resultSet.getInt("salary"));
+                employee.setDepartment(resultSet.getString("department"));
+                employee.setCarId(resultSet.getInt("car_id"));
+                employee.setHouseId(resultSet.getInt("house_id"));
+                resultSet.close();
+
+
+                String sqlManyToMany = "SELECT project_id  FROM emps_projects WHERE employee_id = ?";
+                try (PreparedStatement statementManyToMany = connection.prepareStatement(sqlManyToMany)) {
+                    statementManyToMany.setInt(1, employee.getId());
+                    ResultSet resultSetManyToMany = statementManyToMany.executeQuery();
+                    List<Integer> projects_id = new ArrayList<>();
+                    while (resultSetManyToMany.next()) {
+                        int projectId = resultSet.getInt("project_id");
+                        projects_id.add(projectId);
+                    }
+                    for (Integer i : projects_id) {
+                        Project project = projectDAO.getProjectById(i);
+                        employee.getProjects().add(project);
+                    }
+
+                    statementManyToMany.close();
+                    resultSetManyToMany.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+                return employee;
+            }
             resultSet.close();
             statement.close();
 
-            String sqlManyToMany = "SELECT project_id  FROM emps_projects WHERE employee_id = ?";
-            PreparedStatement statementManyToMany = connection.prepareStatement(sqlManyToMany);
-            statementManyToMany.setInt(1,employee.getId());
-            ResultSet resultSetManyToMany = statementManyToMany.executeQuery();
-            List<Integer> projects_id = new ArrayList<>();
-            while (resultSetManyToMany.next()) {
-                int projectId = resultSet.getInt("project_id");
-                projects_id.add(projectId);
-            }
-            for(Integer i :projects_id){
-                Project project = projectDAO.getProjectById(i);
-                employee.getProjects().add(project);
-            }
-
-            statementManyToMany.close();
-            resultSetManyToMany.close();
-            return employee;
         }
-        resultSet.close();
-        statement.close();
+        catch (SQLException e) {
+        e.printStackTrace();
+    }
         return null;
     }
+
     public List<Employee> getAllEmployees() throws SQLException {
         String sql = "SELECT * FROM employee_full";
-        PreparedStatement statement = connection.prepareStatement(sql);
-        ResultSet resultSet = statement.executeQuery();
         List<Employee> employees = new ArrayList<>();
-        while (resultSet.next()) {
-            Employee employee = new Employee();
-            employee.setId(resultSet.getInt("id"));
-            employee.setName(resultSet.getString("name"));
-            employee.setSurname(resultSet.getString("surname"));
-            employee.setSalary(resultSet.getInt("salary"));
-            employee.setDepartment(resultSet.getString("department"));
-            employee.setCarId(resultSet.getInt("car_id"));
-            employee.setHouse_id(resultSet.getInt("house_id"));
-            String sqlManyToMany = "SELECT project_id  FROM emps_projects WHERE employee_id = ?";
-            PreparedStatement statementManyToMany = connection.prepareStatement(sqlManyToMany);
-            statementManyToMany.setInt(1,employee.getId());
-            ResultSet resultSetManyToMany = statementManyToMany.executeQuery();
-            List<Integer> projects_id = new ArrayList<>();
-            while (resultSetManyToMany.next()) {
-                int projectId = resultSetManyToMany.getInt("project_id");
-                projects_id.add(projectId);
-            }
-            for(Integer i :projects_id){
-                Project project = projectDAO.getProjectById(i);
-                employee.getProjects().add(project);
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                Employee employee = new Employee();
+                employee.setId(resultSet.getInt("id"));
+                employee.setName(resultSet.getString("name"));
+                employee.setSurname(resultSet.getString("surname"));
+                employee.setSalary(resultSet.getInt("salary"));
+                employee.setDepartment(resultSet.getString("department"));
+                employee.setCarId(resultSet.getInt("car_id"));
+                employee.setHouseId(resultSet.getInt("house_id"));
+                String sqlManyToMany = "SELECT project_id  FROM emps_projects WHERE employee_id = ?";
+                try (PreparedStatement statementManyToMany = connection.prepareStatement(sqlManyToMany)) {
+                  statementManyToMany.setInt(1, employee.getId());
+                  ResultSet resultSetManyToMany = statementManyToMany.executeQuery();
+                  List<Integer> projects_id = new ArrayList<>();
+                  while (resultSetManyToMany.next()) {
+                      int projectId = resultSetManyToMany.getInt("project_id");
+                      projects_id.add(projectId);
+                  }
+                  for (Integer i : projects_id) {
+                    Project project = projectDAO.getProjectById(i);
+                    employee.getProjects().add(project);
+                  }
+
+                  statementManyToMany.close();
+                  resultSetManyToMany.close();
+                  employees.add(employee);
+                }
+                catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
 
-            statementManyToMany.close();
-            resultSetManyToMany.close();
-            employees.add(employee);
+            resultSet.close();
+            statement.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-
-        resultSet.close();
-        statement.close();
         return employees;
     }
 
@@ -158,25 +181,25 @@ public class EmployeeDAO {
         statement.close();
 
         String sqlManyToMany = "SELECT project_id  FROM emps_projects WHERE employee_id = ?";
-        PreparedStatement statementManyToMany = connection.prepareStatement(sqlManyToMany);
-        statementManyToMany.setInt(1,employee.getId());
-        ResultSet resultSetManyToMany = statementManyToMany.executeQuery();
-        List<Integer> projects_id = new ArrayList<>();
-        while (resultSetManyToMany.next()) {
+        try (PreparedStatement statementManyToMany = connection.prepareStatement(sqlManyToMany)) {
+          statementManyToMany.setInt(1,employee.getId());
+          ResultSet resultSetManyToMany = statementManyToMany.executeQuery();
+          List<Integer> projects_id = new ArrayList<>();
+          while (resultSetManyToMany.next()) {
             int projectId = resultSetManyToMany.getInt("project_id");
             projects_id.add(projectId);
-        }
-        for(Integer i :projects_id){
+          }
+          for(Integer i :projects_id){
             Project project = projectDAO.getProjectById(i);
             employee.getProjects().add(project);
-        }
+          }
 
-        int newLengthProject = projects.size();
+          int newLengthProject = projects.size();
 
 
-        int priviousLengthProject = projects_id.size();
+         int priviousLengthProject = projects_id.size();
 
-        if(priviousLengthProject>newLengthProject){
+         if(priviousLengthProject>newLengthProject){
             int difference = priviousLengthProject - newLengthProject;
             for (int i = 0;i<difference;i++){
                 for (Integer index: projects_id){
@@ -197,18 +220,18 @@ public class EmployeeDAO {
 
         if(priviousLengthProject<newLengthProject){
             int projectId = 0;
-            boolean Flag = false;
+            boolean equal = false;
             int difference = newLengthProject-priviousLengthProject;
             for (int i = 0; i < difference; i++) {
                 Project newProject = new Project("new_project ", 0);
                 projectDAO.addProject(newProject);
-                if (Flag == false) {
+                if (!equal) {
                     List<Project> projectslist1 = projectDAO.getAllProjects();
                     for (Project project : projectslist1) {
                         if (newProject.getTitle().equals(project.getTitle())
                                 && newProject.getYear() == project.getYear()) {
                             projectId = project.getId();
-                            Flag = true;
+                            equal = true;
                         }
                     }
                 }
@@ -230,6 +253,9 @@ public class EmployeeDAO {
                 projectDAO.updateProject(project);
             }
 
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 

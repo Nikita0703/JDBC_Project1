@@ -22,10 +22,10 @@ public class App
             AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(AppConfig.class);
             EmployeeService employeeService = context.getBean("employeeService",EmployeeService.class);
 
-            final String POSSIBLE_ANSWER1 = "добавить";
-            final String POSSIBLE_ANSWER2 = "вывести всех";
-            final String POSSIBLE_ANSWER3 = "удалить";
-            final String POSSIBLE_ANSWER4 = "обновить";
+            final String POSSIBLE_ANSWER_ADD = "добавить";
+            final String POSSIBLE_ANSWER_SHOW = "вывести всех";
+            final String POSSIBLE_ANSWER_DELETE = "удалить";
+            final String POSSIBLE_ANSWER_UPDATE = "обновить";
 
             Scanner scanner = new Scanner(System.in);
 
@@ -35,18 +35,18 @@ public class App
             int employeeSalary;
             String employeeDepartment;
 
-            String CarModel;
-            int CarMade;
+            String carModel;
+            int carMade;
 
-            String HouseAdress;
-            int HouseFlour;
-            int HouseFlat;
+            String houseAdress;
+            int houseFlour;
+            int houseFlat;
 
-            String PetVid;
-            String PetName;
+            String petVid;
+            String petName;
 
-            String ProjectTitle;
-            int ProjectYear;
+            String projectTitle;
+            int projectYear;
 
             int numberOfPets;
             int numberOfProjects;
@@ -63,7 +63,7 @@ public class App
                 System.out.print("Что будем делать (добавить,вывести всех,удалить,обновить): ");
                 answerToDoing = scanner.nextLine();
                 switch (answerToDoing) {
-                    case POSSIBLE_ANSWER1:
+                    case POSSIBLE_ANSWER_ADD:
                         System.out.print("Введите имя: ");
                         employeeName = scanner.nextLine();
                         System.out.print("Введите фамилию: ");
@@ -76,30 +76,30 @@ public class App
                          employee = new Employee(employeeName,employeeSurname,employeeSalary,employeeDepartment);
 
                         System.out.print("Введите модель машины: ");
-                        CarModel = scanner.nextLine();
+                        carModel = scanner.nextLine();
                         System.out.print("Введите год машины: ");
-                        CarMade = scanner.nextInt();
+                        carMade = scanner.nextInt();
 
-                         car = new Car(CarModel,CarMade);
+                         car = new Car(carModel,carMade);
 
                         System.out.print("Введите адресс: ");
-                        HouseAdress = scanner.nextLine();
+                        houseAdress = scanner.nextLine();
                         System.out.print("Введите этаж: ");
-                        HouseFlour = scanner.nextInt();
+                        houseFlour = scanner.nextInt();
                         System.out.print("Введите квартиру: ");
-                        HouseFlat = scanner.nextInt();
+                        houseFlat = scanner.nextInt();
 
-                        house = new House(HouseAdress,HouseFlour,HouseFlat);
+                        house = new House(houseAdress,houseFlour,houseFlat);
 
                         System.out.print("Введите количество питомцев: ");
                         numberOfPets = scanner.nextInt();
 
                         for (int i = 0;i<numberOfPets;i++){
                             System.out.print("Введите вид: ");
-                            PetVid = scanner.nextLine();
+                            petVid = scanner.nextLine();
                             System.out.print("Введите имя: ");
-                            PetName = scanner.nextLine();
-                            Pet pet = new Pet(PetVid,PetName);
+                            petName = scanner.nextLine();
+                            Pet pet = new Pet(petVid,petName);
                             pets.add(pet);
                         }
 
@@ -108,10 +108,10 @@ public class App
 
                         for (int i = 0;i<numberOfProjects;i++){
                             System.out.print("Введите назвагие: ");
-                            ProjectTitle = scanner.nextLine();
+                            projectTitle = scanner.nextLine();
                             System.out.print("Введите год: ");
-                            ProjectYear = scanner.nextInt();
-                            Project project = new Project(ProjectTitle,ProjectYear);
+                            projectYear = scanner.nextInt();
+                            Project project = new Project(projectTitle,projectYear);
                             projects.add(project);
                         }
 
@@ -119,18 +119,18 @@ public class App
 
                         break;
 
-                    case POSSIBLE_ANSWER2:
+                    case POSSIBLE_ANSWER_SHOW:
                         System.out.println("Список сотрудников");
                         employeeService.printAllEmployees();
                         break;
 
-                    case POSSIBLE_ANSWER3:
+                    case POSSIBLE_ANSWER_DELETE:
                         System.out.println("Введите id сотрудника,которого желаете удалить");
                         id  = scanner.nextInt();
                         employeeService.deleteEmployee(id);
                         break;
 
-                    case POSSIBLE_ANSWER4:
+                    case POSSIBLE_ANSWER_UPDATE:
                         System.out.println("Введите id сотрудника,которого желаете обновить");
                         id  = scanner.nextInt();
                         System.out.print("Введите имя: ");
@@ -145,30 +145,30 @@ public class App
                         employee = new Employee(employeeName,employeeSurname,employeeSalary,employeeDepartment);
 
                         System.out.print("Введите модель машины: ");
-                        CarModel = scanner.nextLine();
+                        carModel = scanner.nextLine();
                         System.out.print("Введите год машины: ");
-                        CarMade = scanner.nextInt();
+                        carMade = scanner.nextInt();
 
-                        car = new Car(CarModel,CarMade);
+                        car = new Car(carModel,carMade);
 
                         System.out.print("Введите адресс: ");
-                        HouseAdress = scanner.nextLine();
+                        houseAdress = scanner.nextLine();
                         System.out.print("Введите этаж: ");
-                        HouseFlour = scanner.nextInt();
+                        houseFlour = scanner.nextInt();
                         System.out.print("Введите квартиру: ");
-                        HouseFlat = scanner.nextInt();
+                        houseFlat = scanner.nextInt();
 
-                        house = new House(HouseAdress,HouseFlour,HouseFlat);
+                        house = new House(houseAdress,houseFlour,houseFlat);
 
                         System.out.print("Введите количество питомцев: ");
                         numberOfPets = scanner.nextInt();
 
                         for (int i = 0;i<numberOfPets;i++){
                             System.out.print("Введите вид: ");
-                            PetVid = scanner.nextLine();
+                            petVid = scanner.nextLine();
                             System.out.print("Введите имя: ");
-                            PetName = scanner.nextLine();
-                            Pet pet = new Pet(PetVid,PetName);
+                            petName = scanner.nextLine();
+                            Pet pet = new Pet(petVid,petName);
                             pets.add(pet);
                         }
 
@@ -177,10 +177,10 @@ public class App
 
                         for (int i = 0;i<numberOfProjects;i++){
                             System.out.print("Введите назвагие: ");
-                            ProjectTitle = scanner.nextLine();
+                            projectTitle = scanner.nextLine();
                             System.out.print("Введите год: ");
-                            ProjectYear = scanner.nextInt();
-                            Project project = new Project(ProjectTitle,ProjectYear);
+                            projectYear = scanner.nextInt();
+                            Project project = new Project(projectTitle,projectYear);
                             projects.add(project);
                         }
 

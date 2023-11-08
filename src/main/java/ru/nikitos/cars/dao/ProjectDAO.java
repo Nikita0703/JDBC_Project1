@@ -15,54 +15,65 @@ public class ProjectDAO {
     public int addProject(Project project) throws SQLException {
         int id = 0;
         String sql = "INSERT INTO projects_for_empl (title, year) VALUES (?, ?)";
-        PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-        statement.setString(1, project.getTitle());
-        statement.setInt(2, project.getYear());
-        statement.executeUpdate();
-        try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
+        try(PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)){
+          statement.setString(1, project.getTitle());
+          statement.setInt(2, project.getYear());
+          statement.executeUpdate();
+          try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
             if (generatedKeys.next()) {
                 id = generatedKeys.getInt(1);
                 System.out.println("Inserted object with id: " + id);
             } else {
                 throw new SQLException("Creating user failed, no ID obtained.");
             }
+          }
+          statement.close();
         }
-        statement.close();
+        catch (SQLException e) {
+            e.printStackTrace();
+        }
         return id;
     }
 
 
     public Project getProjectById(int id) throws SQLException {
         String sql = "SELECT * FROM projects_for_empl WHERE id = ?";
-        PreparedStatement statement = connection.prepareStatement(sql);
-        statement.setInt(1, id);
-        ResultSet resultSet = statement.executeQuery();
         Project project = null;
-        if (resultSet.next()) {
-            project = new Project();
-            project.setId(resultSet.getInt("id"));
-            project.setTitle(resultSet.getString("title"));
-            project.setYear(resultSet.getInt("year"));
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            ResultSet resultSet = statement.executeQuery();
+            project = null;
+            if (resultSet.next()) {
+                project = new Project();
+                project.setId(resultSet.getInt("id"));
+                project.setTitle(resultSet.getString("title"));
+                project.setYear(resultSet.getInt("year"));
+            }
+            resultSet.close();
+            statement.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        resultSet.close();
-        statement.close();
         return project;
     }
 
     public List<Project> getAllProjects() throws SQLException {
         String sql = "SELECT * FROM projects_for_empl";
-        PreparedStatement statement = connection.prepareStatement(sql);
-        ResultSet resultSet = statement.executeQuery();
         List<Project> projects = new ArrayList<>();
-        while (resultSet.next()) {
-           Project project = new Project();
-            project.setId(resultSet.getInt("id"));
-            project.setTitle(resultSet.getString("title"));
-            project.setYear(resultSet.getInt("year"));
-            projects.add(project);
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                Project project = new Project();
+                project.setId(resultSet.getInt("id"));
+                project.setTitle(resultSet.getString("title"));
+                project.setYear(resultSet.getInt("year"));
+                projects.add(project);
+            }
+            resultSet.close();
+            statement.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-        resultSet.close();
-        statement.close();
         return projects;
 
     }
